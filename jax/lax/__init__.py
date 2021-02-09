@@ -333,6 +333,8 @@ from jax._src.lax.parallel import (
   axis_index_p,
   pmax,
   pmax_p,
+  pargmax,
+  pargmin,
   pmean,
   pmin,
   pmin_p,

@@ -1653,6 +1653,26 @@ class PmapTest(jtu.JaxTestCase):
     z = pmap(f, axis_name='i', out_axes=None)(x, y)
     self.assertAllClose(z, jnp.dot(x.T, y))
 
+  @parameterized.named_parameters(
+      {"testcase_name": "_shape={}_axis={}_collective={}".format(
+          jtu.format_shape_dtype_string(shape, dtype),
+          axis, collective.__name__.replace(" ", "")),
+       "shape": shape, "dtype": dtype, "axis": axis,
+       "collective": collective, "bulk_op": bulk_op}
+      for collective, bulk_op in [(lax.pargmax, jnp.argmax),
+                                  (lax.pargmin, jnp.argmin)]
+      for dtype in [np.float32, np.int32]
+      for shape in [(4,), (4, 2)]
+      for axis in range(len(shape))
+  )
+  def testArgAllReduce(self, shape, dtype, axis, collective, bulk_op):
+    rng = jtu.rand_default(self.rng())
+    x = rng(shape, dtype)
+    ans = vmap(lambda x: collective(x, 'i'), in_axes=axis, out_axes=None,
+               axis_name='i')(x)
+    expected = bulk_op(x, axis=axis)
+    self.assertAllClose(ans, expected, check_dtypes=False)
+
 
 class VmapOfPmapTest(jtu.JaxTestCase):
 

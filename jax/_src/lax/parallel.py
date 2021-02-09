@@ -180,6 +180,47 @@ def pmin(x, axis_name, *, axis_index_groups=None):
                          axis_index_groups=axis_index_groups)
   return tree_util.tree_unflatten(treedef, out_flat)
 
+def pargmin(x, axis_name):
+  """Compute an all-reduce argmin on ``x`` over the pmapped axis ``axis_name``.
+
+  Args:
+    x: array with a mapped axis named ``axis_name``.
+    axis_name: hashable Python object used to name a pmapped axis (see the
+      :func:`jax.pmap` documentation for more details).
+
+  Returns:
+    Array(s) with the same shape as ``x`` representing the result of an
+    all-reduce argmin along the axis ``axis_name``.
+  """
+  # This implementation performs two all-reductions because we don't have
+  # variadic all-reduces.
+  if isinstance(axis_name, (tuple, list)):
+    raise TypeError(f"pargmin only accepts a single axis, got {axis_name}")
+  return _axis_index_of_val(x, pmin(x, axis_name), axis_name)
+
+def pargmax(x, axis_name):
+  """Compute an all-reduce argmax on ``x`` over the pmapped axis ``axis_name``.
+
+  Args:
+    x: array with a mapped axis named ``axis_name``.
+    axis_name: hashable Python object used to name a pmapped axis (see the
+      :func:`jax.pmap` documentation for more details).
+
+  Returns:
+    Array(s) with the same shape as ``x`` representing the result of an
+    all-reduce argmax along the axis ``axis_name``.
+  """
+  # This implementation performs two all-reductions because we don't have
+  # variadic all-reduces.
+  if isinstance(axis_name, (tuple, list)):
+    raise TypeError(f"pargmin only accepts a single axis, got {axis_name}")
+  return _axis_index_of_val(x, pmax(x, axis_name), axis_name)
+
+def _axis_index_of_val(x, val, axis_name):
+  idx = axis_index(axis_name)
+  validx = lax_numpy.where(val == x, idx, dtypes.iinfo(dtypes.dtype(idx)).max)
+  return pmin(validx, axis_name)
+
 def _validate_axis_index_groups(axis_index_groups):
   if axis_index_groups is None:
     return

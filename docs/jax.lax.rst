@@ -175,6 +175,8 @@ Parallelism support is experimental.
     psum
     pmax
     pmin
+    pargmax
+    pargmin
     pmean
     ppermute
     pshuffle
