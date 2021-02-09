@@ -97,7 +97,7 @@ def _map_coordinates(input, coordinates, order, mode, cval):
   outputs = []
   for items in itertools.product(*valid_1d_interpolations):
     indices, validities, weights = zip(*items)
-    if all(valid is True for valid in validities):
+    if mode != 'constant':
       # fast path
       contribution = input[indices]
     else:
